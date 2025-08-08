@@ -392,6 +392,7 @@ IMPLEMENTING SUPPORT for ImGuiBackendFlags_RendererHasTextures:
  When you are not sure about an old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all imgui files.
  You can read releases logs https://github.com/ocornut/imgui/releases for more details.
 
+ - 2025/08/08 (1.92.2) - Backends: SDL_GPU3: Changed ImTextureID type from SDL_GPUTextureSamplerBinding* to SDL_GPUTexture*, which is more natural and easier for user to manage. If you need to change the current sampler, you can access the ImGui_ImplSDLGPU3_RenderState struct. (#8866, #8163, #7998, #7988)
  - 2025/07/31 (1.92.2) - Tabs: Renamed ImGuiTabBarFlags_FittingPolicyResizeDown to ImGuiTabBarFlags_FittingPolicyShrink. Kept inline redirection enum (will obsolete).
  - 2025/06/25 (1.92.0) - Layout: commented out legacy ErrorCheckUsingSetCursorPosToExtendParentBoundaries() fallback obsoleted in 1.89 (August 2022) which allowed a SetCursorPos()/SetCursorScreenPos() call WITHOUT AN ITEM
                          to extend parent window/cell boundaries. Replaced with assert/tooltip that would already happens if previously using IMGUI_DISABLE_OBSOLETE_FUNCTIONS. (#5548, #4510, #3355, #1760, #1490, #4152, #150)
@@ -8838,11 +8839,14 @@ void ImGui::UpdateCurrentFontSize(float restore_font_size_after_scaling)
     g.Style.FontSizeBase = g.FontSizeBase;
 
     // Early out to avoid hidden window keeping bakes referenced and out of GC reach.
-    // However this would leave a pretty subtle and damning error surface area if g.FontBaked was mismatching, so for now we null it.
+    // However this would leave a pretty subtle and damning error surface area if g.FontBaked was mismatching.
     // FIXME: perhaps g.FontSize should be updated?
     if (window != NULL && window->SkipItems)
-        if (g.CurrentTable == NULL || g.CurrentTable->CurrentColumn != -1) // See 8465#issuecomment-2951509561. Ideally the SkipItems=true in tables would be amended with extra data.
+    {
+        ImGuiTable* table = g.CurrentTable;
+        if (table == NULL || (table->CurrentColumn != -1 && table->Columns[table->CurrentColumn].IsSkipItems == false)) // See 8465#issuecomment-2951509561 and #8865. Ideally the SkipItems=true in tables would be amended with extra data.
             return;
+    }
 
     // Restoring is pretty much only used by PopFont()
     float final_size = (restore_font_size_after_scaling > 0.0f) ? restore_font_size_after_scaling : 0.0f;
