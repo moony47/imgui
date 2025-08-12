@@ -1,6 +1,8 @@
 project "ImGui"
     kind "StaticLib"
     language "C++"
+	cppdialect "C++23"
+	staticruntime "On"
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
@@ -22,13 +24,9 @@ project "ImGui"
 		"imgui_demo.cpp",
 		"imgui_tables.cpp"
     }
-
-    defines { "IMGUI_API=__declspec(dllexport)" }
-
+	
 	filter "system:windows"
 		systemversion "latest"
-		cppdialect "C++23"
-		staticruntime "On"
 
 	filter "configurations:Debug"
 		runtime "Debug"
